@@ -11,4 +11,5 @@ data class UserProfile(
     val preferences: String = "",
     val availability: String = ""
     val test: String = ""
+    #j unit, maktio - which creates the fake http test, unit test are there jsut get unresolved (use geokoko to run the code coverage report) 
 )
