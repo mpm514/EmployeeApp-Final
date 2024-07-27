@@ -10,4 +10,5 @@ data class UserProfile(
     val skills: List<String> = listOf(),
     val preferences: String = "",
     val availability: String = ""
+    val test: String = ""
 )
