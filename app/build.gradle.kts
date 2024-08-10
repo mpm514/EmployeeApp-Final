@@ -82,6 +82,17 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.0")
 
+    implementation("androidx.compose.ui:ui:1.5.1")
+    implementation("androidx.compose.material:material:1.5.1")
+    implementation("androidx.compose.ui:ui-text:1.5.1")
+
+    implementation("com.itextpdf:kernel:7.1.14")
+    implementation("com.itextpdf:layout:7.1.14")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+
+    //implementation("androidx.compose.material:material-icons-extended:$compose_version")
+    implementation("androidx.compose.material:material-icons-core:1.3.0")
+
 }
 
 apply(plugin = "com.google.gms.google-services")

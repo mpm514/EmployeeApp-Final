@@ -7,31 +7,33 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.employeeapp.AuthState
 import com.example.employeeapp.AuthViewModel
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 
 @Composable
 fun SignupPage(navController: NavController, authViewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isAdmin by remember { mutableStateOf(false) }
     val authState by authViewModel.authState.observeAsState()
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Authenticated -> {
-                Log.d("SignupPage", "Authenticated")
-                navController.navigate("login") {
+                navController.navigate("profile?isFromSignup=true") {
                     popUpTo("signup") { inclusive = true }
                 }
-                authViewModel.setMessage("Account created successfully. Please log in.")
+                authViewModel.setMessage("Please complete your profile.")
             }
             is AuthState.Error -> {
-                Log.d("SignupPage", "Error: ${(authState as AuthState.Error).message}")
                 showError = true
                 errorMessage = (authState as AuthState.Error).message
             }
@@ -63,15 +65,28 @@ fun SignupPage(navController: NavController, authViewModel: AuthViewModel) {
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
+            visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Checkbox(
+                checked = isAdmin,
+                onCheckedChange = { isAdmin = it }
+            )
+            Text(text = "Register as Admin", fontSize = 16.sp)
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
-                Log.d("SignupPage", "Signup button clicked")
-                authViewModel.signup(email, password)
+                authViewModel.signup(email, password, isAdmin)
             },
             modifier = Modifier.fillMaxWidth()
         ) {

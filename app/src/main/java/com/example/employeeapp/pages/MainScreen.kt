@@ -19,21 +19,66 @@ fun MainScreen(
     profileViewModel: ProfileViewModel,
     snackbarHostState: SnackbarHostState,
     scope: CoroutineScope,
+    userEmail: String?,  // Pass userEmail here
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
 
+    // Check if the current user is an admin
+    val isAdmin = userEmail?.let { email ->
+        authViewModel.validateUserCredentials(context, email) ?: false
+    } ?: false
+
     Scaffold(
         bottomBar = { BottomNavigationBar(navController = navController) }
     ) { innerPadding ->
-        NavHost(navController = navController, startDestination = "home", Modifier.padding(innerPadding)) {
-            composable("home") { HomePage(navController = navController, authViewModel = authViewModel) }
-            composable("profile") { ProfilePage(navController = navController, profileViewModel = profileViewModel) }
-            composable("eventManagement") { EventManagementPage(navController = navController, context = context, snackbarHostState = snackbarHostState, scope = scope) }
-            composable("volunteerMatching") { VolunteerMatchingPage(navController = navController) }
-            composable("notifications") { NotificationsPage(navController = navController) }
-            composable("history") { VolunteerHistoryPage(navController = navController) }
+        NavHost(
+            navController = navController,
+            startDestination = "home",
+            Modifier.padding(innerPadding)
+        ) {
+            composable("home") {
+                HomePage(
+                    navController = navController,
+                    authViewModel = authViewModel,
+                    context = context
+                )
+            }
+            composable("profile") {
+                userEmail?.let { nonNullEmail ->
+                    ProfilePage(
+                        navController = navController,
+                        profileViewModel = profileViewModel,
+                        userEmail = nonNullEmail  // Ensure it's non-null
+                    )
+                }
+            }
+
+            composable("eventManagement") {
+                EventManagementPage(
+                    navController = navController,
+                    context = context,
+                    snackbarHostState = snackbarHostState,
+                    scope = scope
+                )
+            }
+            composable("volunteerMatching") {
+                VolunteerMatchingPage(
+                    navController = navController,
+                    context = context,
+                    snackbarHostState = snackbarHostState,
+                    scope = scope,
+                    isAdmin = isAdmin  // Pass isAdmin here
+                )
+            }
+            composable("notifications") {
+                NotificationsPage(navController = navController)
+            }
+            composable("history") {
+                VolunteerHistoryPage(navController = navController,
+                    context = context)
+            }
         }
     }
 }

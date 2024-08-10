@@ -1,9 +1,8 @@
 package com.example.employeeapp.pages
 
 import android.app.DatePickerDialog
+import android.content.Context
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
@@ -12,16 +11,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.employeeapp.ProfileViewModel
-import java.util.*
-import androidx.compose.foundation.rememberScrollState
+import com.example.employeeapp.UserProfile
+import java.util.Calendar
 
 @Composable
-fun ProfilePage(navController: NavController, profileViewModel: ProfileViewModel) {
+fun ProfilePage(navController: NavController, profileViewModel: ProfileViewModel, userEmail: String, isFromSignup: Boolean = false) {
+    val context = LocalContext.current
+
     var fullName by remember { mutableStateOf("") }
     var address1 by remember { mutableStateOf("") }
     var address2 by remember { mutableStateOf("") }
@@ -40,8 +40,21 @@ fun ProfilePage(navController: NavController, profileViewModel: ProfileViewModel
     var skillsError by remember { mutableStateOf(false) }
     var availabilityError by remember { mutableStateOf(false) }
 
-    val states = listOf("AL", "AK", "AZ", "AR", "CA") // Add all state codes here
-    val availableSkills = listOf("Programming", "Guitar", "Teaching", "Mathematics", "Carpentry")
+    LaunchedEffect(Unit) {
+        val profile = profileViewModel.loadUserProfileByEmail(context, userEmail)
+        if (profile != null) {
+            fullName = profile.fullName
+            val addressParts = profile.address.split(" ")
+            address1 = if (addressParts.isNotEmpty()) addressParts[0] else ""
+            address2 = if (addressParts.size > 1) addressParts[1] else ""
+            city = profile.city
+            state = profile.state
+            zipCode = profile.zipcode
+            selectedSkills = profile.skills
+            preferences = profile.preferences
+            availability = profile.availability.split("|")
+        }
+    }
 
     fun validateFields(): Boolean {
         fullNameError = fullName.isBlank()
@@ -55,18 +68,14 @@ fun ProfilePage(navController: NavController, profileViewModel: ProfileViewModel
         return !(fullNameError || address1Error || cityError || stateError || zipCodeError || skillsError || availabilityError)
     }
 
-    val scrollState = rememberScrollState()
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(scrollState),
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = "Profile Page", fontSize = 32.sp)
-
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -141,6 +150,7 @@ fun ProfilePage(navController: NavController, profileViewModel: ProfileViewModel
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
             ) {
+                val states = listOf("AL", "AK", "AZ", "AR", "CA") // Add all state codes
                 states.forEach { stateCode ->
                     DropdownMenuItem(
                         text = { Text(text = stateCode) },
@@ -163,10 +173,9 @@ fun ProfilePage(navController: NavController, profileViewModel: ProfileViewModel
             onValueChange = { zipCode = it },
             label = { Text("Zip Code") },
             modifier = Modifier.fillMaxWidth(),
-            isError = zipCodeError,
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            singleLine = true
         )
+
         if (zipCodeError) {
             Text(text = "Zip Code must be at least 5 characters", color = Color.Red, fontSize = 12.sp)
         }
@@ -192,6 +201,7 @@ fun ProfilePage(navController: NavController, profileViewModel: ProfileViewModel
                 expanded = skillsExpanded,
                 onDismissRequest = { skillsExpanded = false }
             ) {
+                val availableSkills = listOf("Programming", "Guitar", "Teaching", "Mathematics", "Carpentry")
                 availableSkills.forEach { skill ->
                     DropdownMenuItem(
                         text = { Text(text = skill) },
@@ -221,7 +231,6 @@ fun ProfilePage(navController: NavController, profileViewModel: ProfileViewModel
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        val context = LocalContext.current
         val calendar = Calendar.getInstance()
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH)
@@ -267,18 +276,22 @@ fun ProfilePage(navController: NavController, profileViewModel: ProfileViewModel
         Button(
             onClick = {
                 if (validateFields()) {
-                    profileViewModel.updateProfile(
-                        fullName,
-                        address1,
-                        address2,
-                        city,
-                        state,
-                        zipCode,
-                        selectedSkills,
-                        preferences,
-                        availability
+                    val userProfile = UserProfile(
+                        fullName = fullName,
+                        address = "$address1 $address2",
+                        city = city,
+                        state = state,
+                        zipcode = zipCode,
+                        skills = selectedSkills,
+                        preferences = preferences,
+                        availability = availability.joinToString(separator = "|")
                     )
-                    navController.navigate("home")
+                    profileViewModel.saveUserProfile(context, userEmail, userProfile)
+                    if (isFromSignup) {
+                        navController.navigate("login")
+                    } else {
+                        navController.navigate("home")
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth()

@@ -7,5 +7,7 @@ data class EventDetails(
     val requiredSkills: List<String> = listOf(),
     val urgency: String = "",
     val eventDate: String = "",
-    val assignedVolunteers: List<String> = listOf()
+    var assignedVolunteers: List<String> = listOf(),
+    val creatorEmail: String = "",          // Add this line
+    val isCreatorAdmin: Boolean = false     // Add this line
 )

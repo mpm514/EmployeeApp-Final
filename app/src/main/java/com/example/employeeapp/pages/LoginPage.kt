@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.employeeapp.AuthState
 import com.example.employeeapp.AuthViewModel
+import android.util.Log
 
 @Composable
 fun LoginPage(
@@ -34,22 +35,23 @@ fun LoginPage(
     var errorMessage by remember { mutableStateOf("") }
     val successMessage by authViewModel.message.observeAsState()
 
+    // Observe authState changes
     LaunchedEffect(authState) {
+        Log.d("LoginPage", "authState changed: $authState")
         when (authState) {
             is AuthState.Authenticated -> {
                 if (navController.previousBackStackEntry == null) {
                     navController.navigate("home") {
-                        popUpTo("login") { inclusive = true}
-                        }
+                        popUpTo("login") { inclusive = true }
                     }
-
-                else if (navController.currentDestination?.route != "profile") { //checks to avoid a loop
+                } else if (navController.currentDestination?.route != "profile") {
                     navController.navigate("profile")
                 }
             }
             is AuthState.Error -> {
                 showError = true
                 errorMessage = (authState as AuthState.Error).message
+                Log.d("LoginPage", "Authentication error: $errorMessage")
             }
             else -> Unit
         }
@@ -60,6 +62,7 @@ fun LoginPage(
         animationSpec = tween(durationMillis = 300), label = ""
     )
 
+    // UI Components
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -102,7 +105,10 @@ fun LoginPage(
 
         Button(
             onClick = {
+                Log.d("LoginPage", "Login button clicked with email: $email and password: $password")
+                Log.d("LoginPage", "Before calling authViewModel.login, authState: ${authViewModel.authState.value}")
                 authViewModel.login(email, password)
+                Log.d("LoginPage", "After calling authViewModel.login, authState: ${authViewModel.authState.value}")
             },
             enabled = authState != AuthState.Loading,
             colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
